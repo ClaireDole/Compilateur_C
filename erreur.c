@@ -32,13 +32,13 @@ void afficher_erreur(void){
     printf("%sValeur fautive : %s",couleur_rouge,couleur_rouge);
     printf("%s\n",TEXTE_ERREUR);
     printf("%sMessage : %s%s\n",couleur_rouge,MESSAGE_ERREUR,couleur_rouge);
-    exit(1)
 }:
 
-void erreur(enum erreurs type, int ligne,char* explication, char* s){
+void erreur(enum erreurs type, int ligne,const char* explication, char* s){
     TYPE_ERREUR=type;
     LIGNE=ligne;
     MESSAGE_ERREUR=explication;
     TEXTE_ERREUR=s;
-    afficher_erreur()
+    afficher_erreur();
+    exit(1);
 };

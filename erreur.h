@@ -6,5 +6,5 @@ enum erreurs {
     SEMANTIQUE;
 };
 void afficher_erreur(void);
-void erreur(enum erreurs type, char* fonction, char* explication, sexpr s);
+void erreur(enum erreurs type, int ligne, const char* explication, char* s);
 #endif
