@@ -7,5 +7,6 @@ enum erreurs {
 };
 void afficher_erreur(void);
 void erreur(enum erreurs type, int ligne, const char* explication, char* s);
-
+void afficher_warning(void);
+void warning(enum erreurs type, int ligne,const char* explication, char* s);
 #endif
