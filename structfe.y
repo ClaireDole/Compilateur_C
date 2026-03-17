@@ -3,6 +3,7 @@
         #include <stdlib.h>
         #include <string.h>
         #include "erreur.h"
+        #include "tablesymb.h"
     
         extern int yylineno;
         extern char* yytext;
