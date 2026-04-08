@@ -5,6 +5,11 @@
 #include <stdio.h>
 #include <string.h>
 
+/* --- Déclarations forward --- */
+typedef struct DataType DataType;
+typedef struct Symbol Symbol;
+typedef struct SymbolTable SymbolTable;
+
 /* --- Énumérations et Structures de base --- */
 
 typedef enum { 
@@ -12,10 +17,18 @@ typedef enum {
     SYMBOL_STRUCT, 
     SYMBOL_FONC 
 } symbol_type;
-typedef struct {
+
+/* Définition complète de DataType */
+struct DataType {
     char* nom_type;    
     int is_pointer;    
-} DataType;
+};
+
+/* --- Structure pour paramètre --- */
+typedef struct Param {
+    DataType type;
+    struct Param* next;
+} Param;
 
 /* --- Structures de métadonnées --- */
 
@@ -37,11 +50,6 @@ typedef struct {
     int taille_totale;
 } StructInfo;
 
-typedef struct Param {
-    DataType type;
-    struct Param* next;
-} Param;
-
 typedef struct {
     DataType return_type;
     int nb_params;
@@ -49,9 +57,8 @@ typedef struct {
     int is_extern;
 } FoncInfo;
 
-/* --- Entrées de la Table des Symboles --- */
-
-typedef struct {
+/* --- Définition complète de Symbol --- */
+struct Symbol {
     char* name;
     symbol_type kind; 
     union {
@@ -59,7 +66,7 @@ typedef struct {
         StructInfo* str;
         FoncInfo* fonc;
     } data;
-} Symbol;
+};
 
 typedef struct {
     char* key;
@@ -72,11 +79,12 @@ typedef struct {
     Item** items;
 } Table;
 
-typedef struct SymbolTable {
+/* --- Définition de SymbolTable --- */
+struct SymbolTable {
     Table* ht;
     int niveau;
     struct SymbolTable* parent;
-} SymbolTable;
+};
 
 /* --- Prototypes des fonctions --- */
 
@@ -92,8 +100,8 @@ Symbol* new_symbol_fonc(char* name, char* ret_type_nom, int ret_is_ptr, int is_e
 // Gestion des structures
 void add_field_to_struct(Symbol* struct_sym, char* field_name, char* type_nom, int is_ptr);
 
-//Gestion des fonctions
-void add_param_to_function(Symbol* fonc_sym, char* type_nom, int is_ptr)
+// Gestion des fonctions
+void add_param_to_function(Symbol* fonc_sym, char* type_nom, int is_ptr);
 
 // Recherche et Insertion
 Symbol* ts_lookup(SymbolTable* st, const char* name);
@@ -104,4 +112,12 @@ void free_symbol(Symbol* s);
 void free_table(Table* ht);
 void del_symbol_table(SymbolTable* st);
 
-#endif 
+// Gestion des portées
+void enter_scope(void);
+void exit_scope(void);
+
+// Gestion mémoire
+void free_str(char* s);
+void free_data_type(DataType* dt);
+
+#endif
