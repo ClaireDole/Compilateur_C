@@ -5,38 +5,32 @@
 #include <stdio.h>
 #include <string.h>
 
-/* --- Déclarations forward --- */
-typedef struct DataType DataType;
-typedef struct Symbol Symbol;
-typedef struct SymbolTable SymbolTable;
-
-/* --- Énumérations et Structures de base --- */
-
+/* Types de symboles */
 typedef enum { 
-    SYMBOL_VAR, 
-    SYMBOL_STRUCT, 
-    SYMBOL_FONC 
+    SYMBOL_VAR,
+    SYMBOL_STRUCT,
+    SYMBOL_FONC
 } symbol_type;
 
-/* Définition complète de DataType */
-struct DataType {
-    char* nom_type;    
-    int is_pointer;    
-};
+/* Type de données */
+typedef struct DataType {
+    char* nom_type;
+    int is_pointer;
+} DataType;
 
-/* --- Structure pour paramètre --- */
+/* Structure pour un paramètre de fonction */
 typedef struct Param {
     DataType type;
     struct Param* next;
 } Param;
 
-/* --- Structures de métadonnées --- */
-
+/* Structure pour une variable */
 typedef struct {
     DataType type;
-    int is_extern; 
+    int is_extern;
 } VarInfo;
 
+/* Structure pour un champ de structure */
 typedef struct Field {
     char* name;
     DataType type;
@@ -44,79 +38,126 @@ typedef struct Field {
     struct Field* next;
 } Field;
 
+/* Structure pour une structure */
 typedef struct {
     char* nom;
-    Field* champs;     
+    Field* champs;
     int taille_totale;
 } StructInfo;
 
+/* Structure pour une fonction */
 typedef struct {
     DataType return_type;
     int nb_params;
-    Param* params;    
+    Param* params;
     int is_extern;
 } FoncInfo;
 
-/* --- Définition complète de Symbol --- */
-struct Symbol {
+/* Symbole */
+typedef struct Symbol {
     char* name;
-    symbol_type kind; 
+    symbol_type kind;
     union {
         VarInfo* var;
         StructInfo* str;
         FoncInfo* fonc;
     } data;
-};
+} Symbol;
 
+/* Entrée dans la table de hachage */
 typedef struct {
     char* key;
     Symbol* symbol;
 } Item;
 
+/* Table de hachage */
 typedef struct {
     int size;
     int count;
     Item** items;
 } Table;
 
-/* --- Définition de SymbolTable --- */
-struct SymbolTable {
+/* Table des symboles avec gestion des portées */
+typedef struct SymbolTable {
     Table* ht;
     int niveau;
     struct SymbolTable* parent;
-};
+} SymbolTable;
 
-/* --- Prototypes des fonctions --- */
+/* Structure pour stocker temporairement une liste de paramètres */
+typedef struct ParamList {
+    Param* first;
+    Param* last;
+    int count;
+} ParamList;
 
-// Initialisation
+/* Variables globales */
+extern SymbolTable* table_globale;
+extern SymbolTable* table_courante;
+
+/* Initialisation */
 Table* new_table(int size);
 SymbolTable* new_symbol_table(SymbolTable* parent, int niveau, int HT_SIZE);
 
-// Constructeurs de Symboles
+/* Constructeurs de symboles */
 Symbol* new_symbol_var(char* name, char* type_nom, int is_ptr, int is_ext);
 Symbol* new_symbol_struct(char* name);
 Symbol* new_symbol_fonc(char* name, char* ret_type_nom, int ret_is_ptr, int is_ext);
 
-// Gestion des structures
-void add_field_to_struct(Symbol* struct_sym, char* field_name, char* type_nom, int is_ptr);
-
-// Gestion des fonctions
-void add_param_to_function(Symbol* fonc_sym, char* type_nom, int is_ptr);
-
-// Recherche et Insertion
+/* Recherche et insertion */
 Symbol* ts_lookup(SymbolTable* st, const char* name);
 void ts_insert(SymbolTable* st, Symbol* sym, int ligne);
 
-// Libération de la mémoire
+/* Libération mémoire */
 void free_symbol(Symbol* s);
 void free_table(Table* ht);
 void del_symbol_table(SymbolTable* st);
 
-// Gestion des portées
+/* Gestion des portées */
 void enter_scope(void);
 void exit_scope(void);
 
-// Gestion mémoire
+/* Gestion des paramètres de fonction */
+void* create_param_list(void);
+void add_param_to_list(void* param_list, char* type_nom, int is_pointer);
+void free_param_list(ParamList* list);
+
+/* Gestion des fonctions */
+Symbol* create_function_symbol(char* name, int nb_params, void* param_list);
+void end_function_definition(Symbol* func);
+Symbol* get_current_function(void);
+
+/* Gestion des variables */
+void declare_variable(char* name, char* type_nom, int is_pointer, int is_extern);
+
+/* Gestion des identifiants */
+void check_identifier_declared(char* name);
+Symbol* get_identifier_symbol(char* name);
+
+/* Gestion des appels de fonction */
+void check_function_call(char* name);
+void check_function_call_with_args(char* name, int nb_params);
+
+/* Gestion des structures */
+char* declare_struct(char* name);
+char* declare_anonymous_struct(void);
+char* define_struct(char* name);
+void add_struct_field(char* field_name, char* type_nom, int is_pointer);
+void check_struct_field_access(char* struct_name, char* field_name);
+Symbol* get_current_struct(void);
+void set_current_struct(Symbol* s);
+
+/* Gestion des retours de fonction */
+void check_return_statement(void* expr_type);
+void check_return_without_value(void);
+void check_return_with_value(void);
+
+/* Gestion des erreurs sémantiques */
+void error_direct_struct_access(char* field_name);
+void error_unsupported(char* feature);
+void error_redeclaration(char* name, int niveau);
+
+/* Utilitaires mémoire */
 void free_str(char* s);
 void free_data_type(DataType* dt);
 
