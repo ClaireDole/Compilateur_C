@@ -4,13 +4,6 @@
 #include "erreur.h"
 #include "tablesymb.h"
 
-SymbolTable* table_globale = NULL;
-SymbolTable* table_courante = NULL;
-
-static Symbol* current_function = NULL;
-static Symbol* current_struct = NULL;
-
-static int anonymous_counter = 0;
 
 static int hash(const char* s, const int a, const int m) {
     long hash_val = 0;
@@ -67,6 +60,7 @@ Symbol* new_symbol_struct(char* name) {
     s->data.str->nom = strdup(name);
     s->data.str->champs = NULL;
     s->data.str->taille_totale = 0;
+    s->data.str->nb_champs=0;
     return s;
 }
 
@@ -117,6 +111,7 @@ void add_field_to_struct(Symbol* struct_sym, char* field_name, char* type_nom, i
     
     int size_field = (is_ptr) ? 8 : 4;
     struct_sym->data.str->taille_totale += size_field;
+    struct_sym->data.str->nb_champs+=1;
 }
 
 void add_param_to_function(Symbol* fonc_sym, char* type_nom, int is_ptr) {
@@ -244,10 +239,6 @@ void del_symbol_table(SymbolTable* st) {
     if (!st) return;
     free_table(st->ht);
     free(st);
-}
-
-void free_str(char* s) {
-    if (s) free(s);
 }
 
 void free_data_type(DataType* dt) {

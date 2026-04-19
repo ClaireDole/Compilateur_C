@@ -8,6 +8,8 @@ enum erreurs {
     SYMBOLE,
     POINTEUR,
     FLOTTANT,
+    TYPE,
+    FONCTION,
 };
 
 static void affiche_type(enum erreur){
@@ -29,6 +31,12 @@ static void affiche_type(enum erreur){
             break;
         case FLOTTANT : 
             printf("Float error");
+            break;
+        case TYPE : 
+            printf("Type error");
+            break;
+        case FONCTION : 
+            printf("Function error");
             break;
         default :
             break;

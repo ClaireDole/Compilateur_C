@@ -42,6 +42,7 @@ typedef struct Field {
 typedef struct {
     char* nom;
     Field* champs;
+    int nb_champs;
     int taille_totale;
     int is_extern;
 } StructInfo;
@@ -110,8 +111,7 @@ void free_symbol(Symbol* s);
 void free_table(Table* ht);
 void del_symbol_table(SymbolTable* st);
 
-/* Utilitaires mémoire */
-void free_str(char* s);
+/* Utilitaire mémoire */
 void free_data_type(DataType* dt);
 
 #endif

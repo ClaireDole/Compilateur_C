@@ -29,33 +29,59 @@ typedef struct FieldList {
     Field* first;
     Field* last;
     int count;
-} ParamList;
+} FieldList;
+
+typedef struct ArgList {
+    Arg* first;
+    Arg* last;
+    int count;
+} ArgList;
+
+typedef struct Arg {
+    int is_pointer;
+    char* name;
+    DataType type;
+    Arg* next;
+} Arg;
 
 /* Gestion des portées */
 void enter_scope(void);
 void exit_scope(void);
 
 /* Gestion des paramètres de fonction */
-void* create_param_list(void);
-void add_param_to_list(void* param_list, char* type_nom, int is_pointer);
+ParamList* create_param_list(void);
+void add_param_to_list(ParamList* param_list, char* type_nom, int is_pointer);
 void free_param_list(ParamList* list);
 
+/* Gestion des déclarations multiples */
+DeclaList* create_decla_list(void);
+void add_var_to_list(DeclaList* decla_list, char* type_nom, int is_pointer);
+void free_decla_list(DeclaList* list);
+
+/* Gestion des champs des structures */
+FieldList* create_field_list(void);
+void add_field_to_list(FieldList* field_list, char* type_nom, int is_pointer);
+void free_field_list(FieldList* list);
+
+/* Gestion des arguments pour fonctions et structures*/
+ArgList* create_arg_list(void);
+void add_arg_to_list(ArgList* arg_list, char* type_nom, int is_pointer);
+void free_arg_list(ArgList* list);
+
+/*validation des types*/
+void check_validate_param(Param* param,SymbolTable* table_courante,int ligne,char* yytext);
+void check_validate_var(Decla* decla,SymbolTable* table_courante,int ligne,char* yytext,char* nom_type); 
+void check_validate_field(Field* field,SymbolTable* table_courante,int ligne,char* yytext);
+
 /* Gestion des identifiants */
-void check_identifier_declared(char* name);
-Symbol* get_identifier_symbol(char* name);
+void check_identifier_declared(char* name, SymbolTable* table_courante, int ligne);
 
 /* Gestion des appels de fonction */
-void check_function_call(char* name);
-void check_function_call_with_args(char* name, int nb_params);
+int check_function_call(char* name, SymbolTable* table_courante, int ligne);
+int check_function_call_with_args(char* name, int nb_params,int ligne,SymbolTable* table_courante);
 
 /* Gestion des structures */
-char* declare_struct(char* name);
-char* declare_anonymous_struct(void);
-char* define_struct(char* name);
-void add_struct_field(char* field_name, char* type_nom, int is_pointer);
-void check_struct_field_access(char* struct_name, char* field_name);
-Symbol* get_current_struct(void);
-void set_current_struct(Symbol* s);
+DataType check_struct_field_access(char* struct_name, char* field_name, SymbolTable* table_courante, int yylineno);
 
 /* Gestion des retours de fonction */
 void check_return_statement(void* expr_type);
