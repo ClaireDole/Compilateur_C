@@ -20,6 +20,7 @@ typedef struct DataType {
 
 /* Structure pour un paramètre de fonction */
 typedef struct Param {
+    char* name;
     DataType type;
     struct Param* next;
 } Param;
@@ -84,12 +85,24 @@ typedef struct SymbolTable {
     Table* ht;
     int niveau;
     struct SymbolTable* parent;
+    struct SymbolTable* next;
 } SymbolTable;
 
+typedef struct ST{
+    SymbolTable* table;
+    struct ST* next;
+}ST;
+
+typedef struct ST_List {
+    ST* first;
+    ST* last;
+    int count;
+} ST_List;
 
 /* Variables globales */
 extern SymbolTable* table_globale;
 extern SymbolTable* table_courante;
+extern SymbolTable* table_next;
 
 /* Initialisation */
 Table* new_table(int size);
@@ -104,7 +117,13 @@ void add_param_to_function(Symbol* fonc_sym, char* type_nom, int is_ptr);
 
 /* Recherche et insertion */
 Symbol* ts_lookup(SymbolTable* st, const char* name);
+Symbol* global_lookup(ST_List* global, char* name);
 void ts_insert(SymbolTable* st, Symbol* sym, int ligne);
+
+/* Gestion des listes de tables */
+ST_List* create_ST_list(void);
+void add_to_ST_list(ST_List* st_list, SymbolTable* table);
+void free_ST_list(ST_List* list);
 
 /* Libération mémoire */
 void free_symbol(Symbol* s);
@@ -112,6 +131,6 @@ void free_table(Table* ht);
 void del_symbol_table(SymbolTable* st);
 
 /* Utilitaire mémoire */
-void free_data_type(DataType* dt);
+void free_data_type(DataType dt);
 
 #endif

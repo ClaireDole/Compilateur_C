@@ -1,25 +1,27 @@
 D           [0-9]
-L           [a-zA-Z_]
-H           [a-fA-F0-9] /* hexadecimal*/
-E           [Ee][+-]?{D}+ /*exposant*/
+L           [a-zA-Z]
+H           [a-fA-F0-9] 
+E           [Ee][+-]?{D}+ 
 FS          (f|F|l|L)
 IS          (u|U|l|L)
 
 %option yylineno
 %{
     #include <stdio.h>
+    #include <stdlib.h>
     #include <string.h>
-    #include <y.tab.h>
+    #include <errno.h>
     #include "erreur.h"
+    #include "gestion_tables.h"
+    #include "tablesymb.h"
+    #include "structfe.tab.h"
     void comment();
 %}
 
 %%
-    /*Gestion des commentaires*/
 "/*"                    { comment(); }
 "//"[^\n]*              { /* Consume single-line comment */ }
 
-    /*Mots-clés*/
 "extern"                {return EXTERN;}
 "for"                   {return FOR;}
 "while"                 {return WHILE;}
@@ -31,22 +33,19 @@ IS          (u|U|l|L)
 "void"                  {return VOID;}
 "struct"                {return STRUCT;}
 
-    /*identificateurs*/
-{L}({L}|{D}|[_])*       {return IDENTIFIER;}
 
-    /*Nombres flottants*/
-{D}+{E}{FS}?            { return (FLOTTANT);}
-{D}*"."{D}+({E})?{FS}?  { return (FLOTTANT);}
-{D}+"."{D}*({E})?{FS}?  { return (FLOTTANT);}
+{L}({L}|{D}|"_")*       { yylval.nom = strdup(yytext); return IDENTIFIER;}
 
-    /*Nombres entiers*/
-0[xX]{H}+{IS}?          { char *message="Les hexadécimaux ne sont pas autorisés. Base 10 uniquement.";
-                            erreur(LEXICALE,yylineno,message,yytext); }
-0{D}+{IS}?              { char *message="Les octaux ne sont pas autorisés. Base 10 uniquement.";
-                          erreur(LEXICALE,yylineno,message,yytext); }
-{D}+{IS}?               { return CONSTANT; }
 
-    /*Opérateurs composés*/
+{D}+{E}{FS}?            {char* message = "Les chiffres à virgule ne sont pas autorisés."; erreur(LEXICALE,yylineno,message,yytext);}
+{D}*"."{D}+({E})?{FS}?  { char* message = "Les chiffres à virgule ne sont pas autorisés."; erreur(LEXICALE,yylineno,message,yytext);}
+{D}+"."{D}*({E})?{FS}?  { char* message = "Les chiffres à virgule ne sont pas autorisés."; erreur(LEXICALE,yylineno,message,yytext);}
+
+
+0[xX]{H}+{IS}?          { char *message="Les hexadécimaux ne sont pas autorisés. Base 10 uniquement."; erreur(LEXICALE,yylineno,message,yytext); }
+0{D}+{IS}?              { char *message="Les octaux ne sont pas autorisés. Base 10 uniquement."; erreur(LEXICALE,yylineno,message,yytext); }
+{D}+{IS}?               { yylval.valeur = atoi(yytext); return CONSTANT;}
+
 "->"                    { return(PTR_OP); }
 "&&"                    { return(AND_OP); }
 "||"                    { return(OR_OP); }
@@ -55,8 +54,7 @@ IS          (u|U|l|L)
 "=="                    { return(EQ_OP); }
 "!="                    { return(NE_OP); }
 
-    /*Opérateurs simples et ponctuation*/
-"."                     { return '.' ; }
+
 "&"                     { return '&'; }
 "-"                     { return '-'; }
 "+"                     { return '+'; }
@@ -73,11 +71,12 @@ IS          (u|U|l|L)
 ")"                     { return ')' ; }
 
 
-/*Espaces et séparateurs*/
-[\t\v\n\f]              {}
-/*Gestion des erreurs*/
-.                       {   char *message="Le symbole en entrée n'est pas reconnue par le langage.";
-                            erreur(LEXICALE,yylineno,message,yytext);}
+
+[\t\v\n\f\r' ']              { }
+
+"..."                   { char* msg = "Les fonctions variadiques (...) ne sont pas supportees."; erreur(LEXICALE, yylineno, msg, yytext);}
+"."                     {   char* msg="Les structures ne sont manipulables que par pointeur, opérateur . incorrect. Merci d'utiliser ->"; erreur(LEXICALE, yylineno, msg, yytext);}
+.                       {   char *message="Le symbole en entrée n'est pas reconnue par le langage."; erreur(LEXICALE,yylineno,message,yytext);}
 
 %%
 int yywrap() {
@@ -86,11 +85,19 @@ int yywrap() {
 
 void comment() {
     int c;
-    while ((c = input()) != 0) {
+    while (1) {
+        while ((c = input()) != '*' && c != EOF);
         if (c == '*') {
             while ((c = input()) == '*');
-            if (c == '/') return;
-            if (c == 0) break;
+            if (c == '/') break;
+            if (c == EOF) {
+                char* msg = "Commentaire non fermé";
+                erreur(LEXICALE, yylineno, msg, yytext);
+            }
+        }
+        if (c == EOF) {
+            char* msg = "Commentaire non fermé";
+            erreur(LEXICALE, yylineno, msg, yytext);
         }
     }
 }

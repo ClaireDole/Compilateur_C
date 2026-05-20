@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "erreur.h"
+#include "affichage.h"
 #include "tablesymb.h"
 
 
@@ -36,6 +37,8 @@ SymbolTable* new_symbol_table(SymbolTable* parent, int niveau, int HT_SIZE) {
     st->ht = new_table(HT_SIZE);
     st->parent = parent;
     st->niveau = niveau;
+    st->next=NULL;
+    ts_insert(st,new_symbol_struct("_"),0);
     return st;
 }
 
@@ -153,6 +156,63 @@ Symbol* ts_lookup(SymbolTable* st, const char* name) {
     return NULL;
 }
 
+Symbol* global_lookup(ST_List* global, char* name){
+    if (!global || !global->first) {
+        return NULL; 
+    }
+    ST* courant=global->first;
+    SymbolTable* courant_table=courant->table;
+    while(courant){
+        while(courant_table){
+            Symbol* s=ht_search_local(courant_table->ht, name);
+            if (s != NULL) return s;
+            courant_table = courant_table->next;
+        }
+        courant = courant->next;
+        courant_table=courant->table;
+    }
+    return NULL;
+}
+
+ST_List* create_ST_list(void) {
+    ST_List* list = malloc(sizeof(ST_List));
+    if (!list) return NULL;
+    list->first = NULL;
+    list->last = NULL;
+    list->count = 0;
+    return list;
+}
+
+void add_to_ST_list(ST_List* arg_list, SymbolTable* table) {
+    if (!arg_list) return;
+    ST_List* list = (ST_List*)arg_list;
+    
+    ST* arg = malloc(sizeof(ST));
+    arg->table=table;
+    arg->next = NULL;
+    
+    if (list->last) {
+        list->last->next = arg;
+        list->last = arg;
+    } else {
+        list->first = arg;
+        list->last = arg;
+    }
+    list->count++;
+}
+
+void free_ST_list(ST_List* list) {
+    if (!list) return;
+    ST* p = list->first;
+    while (p) {
+        ST* tmp = p;
+        p = p->next;
+        del_symbol_table(tmp->table);
+        free(tmp);
+    }
+    free(list);
+}
+
 void ts_insert(SymbolTable* st, Symbol* sym, int ligne) {
     if (!st || !st->ht) return;
     
@@ -164,7 +224,7 @@ void ts_insert(SymbolTable* st, Symbol* sym, int ligne) {
     if (ht_search_local(st->ht, sym->name) != NULL) {
         char texte[256];
         snprintf(texte, sizeof(texte), 
-                 "La variable '%s' a déjà été déclarée au niveau %d", 
+                 "La variable '%s' a déjà été déclarée dans la portée locale courante (Niveau %d)", 
                  sym->name, st->niveau);
         erreur(SEMANTIQUE, ligne, texte, sym->name);
         return;
@@ -241,9 +301,6 @@ void del_symbol_table(SymbolTable* st) {
     free(st);
 }
 
-void free_data_type(DataType* dt) {
-    if (dt) {
-        free(dt->nom_type);
-        free(dt);
-    }
+void free_data_type(DataType dt) {
+
 }

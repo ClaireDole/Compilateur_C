@@ -4,6 +4,10 @@ enum erreurs {
     LEXICALE,
     SYNTAXE,
     SEMANTIQUE,
+    SYMBOLE,
+    POINTEUR,
+    TYPE,
+    FONCTION,
 };
 void afficher_erreur(void);
 void erreur(enum erreurs type, int ligne, const char* explication, char* s);
